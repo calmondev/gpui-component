@@ -131,6 +131,7 @@ impl Render for Example {
                             .xsmall()
                             .ghost()
                             .icon(IconName::ChevronLeft)
+                            .tooltip("Previous match")
                             .disabled(!has_matches)
                             .on_click(cx.listener(Self::previous_match)),
                     )
@@ -139,6 +140,7 @@ impl Render for Example {
                             .xsmall()
                             .ghost()
                             .icon(IconName::ChevronRight)
+                            .tooltip("Next match")
                             .disabled(!has_matches)
                             .on_click(cx.listener(Self::next_match)),
                     )
@@ -154,6 +156,7 @@ impl Render for Example {
                             .xsmall()
                             .ghost()
                             .icon(IconName::Close)
+                            .tooltip("Close search")
                             .on_click(cx.listener(Self::close_search)),
                     ),
             )
