@@ -17,6 +17,7 @@ members = [
     "examples/hello_world",
     "examples/input",
     "examples/editor",
+    "examples/custom_search",
     "examples/brush",
     "examples/dock",
     "examples/html",
