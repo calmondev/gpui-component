@@ -4933,6 +4933,106 @@ mod tests {
         });
     }
 
+    /// A host that wants the search shortcut for its own search UI.
+    struct SearchHost {
+        editor: Entity<InputBaseState<EditorMode>>,
+        search_requests: Rc<Cell<usize>>,
+    }
+
+    impl Render for SearchHost {
+        fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+            let search_requests = self.search_requests.clone();
+            div()
+                .size_full()
+                .on_action(cx.listener(move |_, _: &Search, _, _| {
+                    search_requests.set(search_requests.get() + 1);
+                }))
+                .child(self.editor.clone())
+        }
+    }
+
+    /// Opens an editor inside [`SearchHost`], focused, and presses the search
+    /// shortcut once. Returns the editor and the host's request count.
+    fn press_search_shortcut(
+        cx: &mut TestAppContext,
+        searchable: bool,
+    ) -> (Entity<InputBaseState<EditorMode>>, Rc<Cell<usize>>) {
+        let search_requests = Rc::new(Cell::new(0));
+        let mut editor = None;
+        let window = cx.update(|cx| {
+            cx.open_window(Default::default(), |window, cx| {
+                cx.set_global(Theme::default());
+                super::super::init(cx);
+                let state =
+                    cx.new(|cx| crate::input::EditorState::new(window, cx).searchable(searchable));
+                editor = Some(state.clone());
+                cx.new(|_| SearchHost {
+                    editor: state,
+                    search_requests: search_requests.clone(),
+                })
+            })
+            .unwrap()
+        });
+        let editor = editor.unwrap();
+        let mut cx = VisualTestContext::from_window(window.into(), cx);
+        cx.update(|window, cx| {
+            editor.update(cx, |state, cx| state.focus(window, cx));
+        });
+        cx.run_until_parked();
+        #[cfg(target_os = "macos")]
+        cx.simulate_keystrokes("cmd-f");
+        #[cfg(not(target_os = "macos"))]
+        cx.simulate_keystrokes("ctrl-f");
+        cx.run_until_parked();
+        (editor, search_requests)
+    }
+
+    #[gpui::test]
+    fn test_search_shortcut_reaches_the_host_when_not_searchable(cx: &mut TestAppContext) {
+        let (editor, search_requests) = press_search_shortcut(cx, false);
+        assert_eq!(search_requests.get(), 1);
+        editor.read_with(cx, |state, _| {
+            assert!(!state.search_session().open);
+            assert!(!state.search_session().is_active());
+        });
+    }
+
+    #[gpui::test]
+    fn test_search_shortcut_opens_the_panel_when_searchable(cx: &mut TestAppContext) {
+        let (editor, search_requests) = press_search_shortcut(cx, true);
+        assert_eq!(search_requests.get(), 0);
+        editor.read_with(cx, |state, _| {
+            assert!(state.search_session().open);
+            assert!(state.search_session().is_active());
+        });
+    }
+
+    #[gpui::test]
+    fn test_set_search_query_highlights_without_the_panel(cx: &mut TestAppContext) {
+        let input_view = InputView::build_editor(cx, |state| state.searchable(false));
+        let mut cx = VisualTestContext::from_window(input_view.window_handle.into(), cx);
+        let input = input_view.input;
+        cx.update(|window, cx| {
+            input.update(cx, |state, cx| {
+                state.set_value("foo bar foo", window, cx);
+                state.set_search_query("foo", true, cx);
+            });
+        });
+        cx.run_until_parked();
+        input.read_with(&cx, |state, _| {
+            let session = state.search_session();
+            assert!(session.is_active());
+            assert!(!session.open);
+            assert_eq!(session.matcher.len(), 2);
+        });
+        cx.update(|_, cx| {
+            input.update(cx, |state, cx| state.close_search(cx));
+        });
+        input.read_with(&cx, |state, _| {
+            assert!(!state.search_session().is_active());
+        });
+    }
+
     #[gpui::test]
     fn test_search_reveals_offscreen_wrapped_match(cx: &mut TestAppContext) {
         let input_view = InputView::new(cx);
