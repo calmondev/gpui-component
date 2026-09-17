@@ -2666,14 +2666,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "example-custom-search"
-version = "0.6.1"
-dependencies = [
- "anyhow",
- "gpui-kit",
-]
-
-[[package]]
 name = "example-dock"
 version = "0.6.1"
 dependencies = [

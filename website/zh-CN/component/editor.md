@@ -202,8 +202,6 @@ div()
     .child(Editor::new(&this.editor))
 ```
 
-`examples/custom_search` 是用这种方式实现的完整搜索栏。
-
 ## 文本装饰
 
 ```rust

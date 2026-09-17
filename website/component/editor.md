@@ -237,8 +237,6 @@ div()
     .child(Editor::new(&this.editor))
 ```
 
-`examples/custom_search` is a complete search bar built this way.
-
 ## Decorations
 
 ```rust
