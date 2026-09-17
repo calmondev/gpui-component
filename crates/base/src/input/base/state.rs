@@ -9087,13 +9087,19 @@ impl InputBaseState<crate::input::InputMode> {
 /// Methods shared by the two multi-line modes, and reachable on neither a
 /// single-line input nor anything else.
 impl<M: crate::input::MultiLineMode> InputBaseState<M> {
-    /// Set this input is searchable, default is false (Default true for Code Editor).
-    #[doc(hidden)]
+    /// Whether the built-in search panel and its shortcut are enabled. Off by
+    /// default, on for the code editor.
+    ///
+    /// This only concerns the panel. An input that is not searchable still
+    /// answers [`InputBaseState::set_search_query`] and the other search
+    /// methods, and lets `Ctrl-F` / `Cmd-F` bubble up to its ancestors, so an
+    /// application can put its own search UI on top of the same engine.
     pub fn searchable(mut self, searchable: bool) -> Self {
         self.searchable = searchable;
         self
     }
 
+    /// See [`InputBaseState::searchable`].
     pub fn set_searchable(&mut self, searchable: bool, cx: &mut Context<Self>) {
         self.searchable = searchable;
         cx.notify();

@@ -176,7 +176,7 @@ editor.update(cx, |state, cx| {
 let matcher = &editor.read(cx).search_session().matcher;
 let label = matcher.label();
 let count = matcher.len();
-let current = matcher.current_match_index();
+let current = matcher.current(); // 没有匹配时为 None
 
 // 替换（编辑器可编辑时）
 editor.update(cx, |state, cx| {

@@ -18,7 +18,12 @@ pub struct SearchMatcher {
     replacing: bool,
 }
 
+/// One search over an input: the query, how the built-in panel shows it, and
+/// its matches. Read it through [`InputBaseState::search_session`]; it is
+/// written only through the input state's search methods, and it grows, so
+/// build it with `Default` and do not destructure it exhaustively.
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub struct SearchSession {
     /// The built-in search panel is showing.
     pub open: bool,
@@ -199,6 +204,8 @@ impl<M: InputModeKind> InputBaseState<M> {
         Some(range)
     }
 
+    /// Replace the current match and move on to the next one. Returns whether
+    /// there was a match to replace.
     pub fn replace_current_search_match(
         &mut self,
         replacement: &str,
@@ -230,6 +237,7 @@ impl<M: InputModeKind> InputBaseState<M> {
         true
     }
 
+    /// Replace every match. Returns how many were replaced.
     pub fn replace_all_search_matches(
         &mut self,
         replacement: &str,
@@ -327,6 +335,12 @@ impl SearchMatcher {
         self.current_match_ix
     }
 
+    /// The index of the current match into [`SearchMatcher::matched_ranges`],
+    /// `None` while there is no match.
+    pub fn current(&self) -> Option<usize> {
+        (!self.is_empty()).then_some(self.current_match_ix)
+    }
+
     pub fn len(&self) -> usize {
         self.matched_ranges.len()
     }
@@ -335,11 +349,11 @@ impl SearchMatcher {
         self.matched_ranges.is_empty()
     }
 
+    /// `2/5`: the current match and the total, `0/0` without matches.
     pub fn label(&self) -> String {
-        if self.is_empty() {
-            "0/0".into()
-        } else {
-            format!("{}/{}", self.current_match_ix + 1, self.len())
+        match self.current() {
+            Some(ix) => format!("{}/{}", ix + 1, self.len()),
+            None => "0/0".into(),
         }
     }
 

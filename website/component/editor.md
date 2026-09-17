@@ -211,7 +211,7 @@ editor.update(cx, |state, cx| {
 let matcher = &editor.read(cx).search_session().matcher;
 let label = matcher.label();
 let count = matcher.len();
-let current = matcher.current_match_index();
+let current = matcher.current(); // None without matches
 
 // Replace, when the editor is editable
 editor.update(cx, |state, cx| {
